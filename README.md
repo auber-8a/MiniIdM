@@ -36,6 +36,31 @@ La topología de red real implementada (adaptada para entornos virtuales y WSL2)
 
 ---
 
+
+## 🗂️ 1.2. Estructura del Directorio (DIT)
+
+El Directory Information Tree (DIT) de **MiniIdM** ha sido diseñado bajo un enfoque de **Control de Acceso Basado en Roles (RBAC)** para segmentar las identidades de la FIS:
+
+```text
+dc=fis,dc=epn,dc=ec (Raíz del DIT)
+├── ou=estudiantes
+│   ├── ou=pregrado
+│   │   └── uid=aochoa (Aubertin Ochoa)
+│   └── ou=posgrado
+│       └── uid=jperez (Juan Perez)
+├── ou=profesores
+│   └── uid=emafla (Enrique Mafla)
+└── ou=administrativos
+    ├── ou=decanato
+    │   └── uid=rnavarrete (Rosa Navarrete)
+    ├── ou=infraestructura_redes
+    │   └── uid=mortega (Mario Ortega)
+    ├── ou=finanzas
+    │   └── uid=lsuarez (Luis Suarez)
+    └── ou=talento_humano
+        └── uid=dmontuano (David Montuano)
+```
+
 ## 🛠️ 2. Guía de Uso y Administración Rápida
 
 Para facilitar la evaluación, control y auditoría de la plataforma en tiempo real, la raíz del repositorio incluye un `Makefile` con comandos automatizados:
