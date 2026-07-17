@@ -8,18 +8,23 @@ LDAP_URI       = ldap://ldap.fis.epn.edu.ec:3890
 LDAP_BASE      = dc=fis,dc=epn,dc=ec
 LDAP_LOCAL_URI = ldap://127.0.0.1:3389
 
+# Colores para mejorar el diagnóstico en la terminal
+OK_COLOR   = \033[1;32m[ OK ]\033[0m
+FAIL_COLOR = \033[1;31m[ FALLO ]\033[0m
+INFO_COLOR = \033[1;36m[INFO]\033[0m
+
 .PHONY: help status restart-services test-active test-dns test-failover clean-logs
 
 help:
 	@echo "======================================================================"
-	@echo "       Comandos de Administración de Infraestructura (HA)"
+	@echo "        Comandos de Administración de Infraestructura (HA)"
 	@echo "======================================================================"
-	@echo "  make status             - Verifica el estado de slapd, Kerberos y HAProxy"
-	@echo "  make restart-services   - Reinicia los demonios locales"
-	@echo "  make test-active        - Prueba de consulta LDAP directa al puerto local (3389)"
-	@echo "  make test-dns           - Prueba de resolución de DNS mediante el balanceador (3890)"
-	@echo "  make test-failover      - Ejecuta el bucle de inyección de fallos (10 queries/1s)"
-	@echo "  make clean-logs         - Limpia archivos temporales y dumps del directorio"
+	@echo "  make status           - Verifica el estado de slapd, Kerberos y HAProxy"
+	@echo "  make restart-services - Reinicia los demonios locales de forma segura"
+	@echo "  make test-active      - Prueba de consulta LDAP directa al puerto local (3389)"
+	@echo "  make test-dns         - Prueba de resolución de DNS mediante el balanceador (3890)"
+	@echo "  make test-failover    - Ejecuta el bucle infinito de monitoreo de caídas (1s sleep)"
+	@echo "  make clean-logs       - Limpia archivos temporales y dumps del directorio"
 	@echo "======================================================================"
 
 status:
@@ -31,26 +36,33 @@ status:
 	-sudo systemctl status haproxy --no-pager
 
 restart-services:
-	@echo "Reiniciando servicios del nodo local..."
-	sudo systemctl restart slapd
-	sudo systemctl restart krb5-kdc
-	sudo systemctl restart haproxy
-	@echo "¡Servicios reiniciados!"
+	@echo "$(INFO_COLOR) Reiniciando servicios detectados en este nodo..."
+	@sudo systemctl restart slapd && echo "  -> OpenLDAP: $(OK_COLOR)"
+	@-systemctl list-unit-files | grep -q krb5-kdc && sudo systemctl restart krb5-kdc && echo "  -> Kerberos: $(OK_COLOR)" || true
+	@-systemctl list-unit-files | grep -q haproxy && sudo systemctl restart haproxy && echo "  -> HAProxy:  $(OK_COLOR)" || true
+	@echo "¡Proceso de reinicio completado!"
 
 test-active:
-	@echo "Consultando el namingContexts directo al LDAP local (Puerto 3389)..."
+	@echo "$(INFO_COLOR) Consultando el namingContexts directo al LDAP local (Puerto 3389)..."
 	ldapsearch -x -H $(LDAP_LOCAL_URI) -s base -b "" namingContexts
 
 test-dns:
-	@echo "Consultando el namingContexts a través del Balanceador HAProxy (Puerto 3890)..."
+	@echo "$(INFO_COLOR) Consultando el namingContexts a través del Balanceador HAProxy (Puerto 3890)..."
 	ldapsearch -x -H $(LDAP_URI) -s base -b "" namingContexts
 
 test-failover:
-	@echo "Iniciando bucle de inyección de fallos continuo (10 iteraciones, 1s sleep)..."
-	@for i in $$(seq 1 10); do \
-		time ldapsearch -x -H $(LDAP_URI) -b "$(LDAP_BASE)" > /dev/null && \
-		echo "[$$(date +%T)] Consulta $$i: [ OK ]" || \
-		echo "[$$(date +%T)] Consulta $$i: [ FALLO ]"; \
+	@echo "$(INFO_COLOR) Iniciando ráfaga continua de consultas hacia el balanceador..."
+	@echo "$(INFO_COLOR) Abre otra terminal y apaga un nodo para verificar el RTO."
+	@echo "Presiona [CTRL+C] para detener el experimento."
+	@echo "----------------------------------------------------------------------"
+	@i=1; \
+	while true; do \
+		if ldapsearch -x -H $(LDAP_URI) -b "$(LDAP_BASE)" > /dev/null 2>&1; then \
+			echo -e "[$$(date +%T)] Consulta $$i: $(OK_COLOR)"; \
+		else \
+			echo -e "[$$(date +%T)] Consulta $$i: $(FAIL_COLOR)"; \
+		fi \
+		i=$$((i+1)); \
 		sleep 1; \
 	done
 
