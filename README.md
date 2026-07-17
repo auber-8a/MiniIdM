@@ -1,51 +1,66 @@
-# MiniIdM
-# Infraestructura de Identidad Segura para la FIS
+# MiniIdM: Infraestructura de Identidad Segura para la FIS
 
-## 🚀 Guía de Uso y Administración rápida
-
-El repositorio incluye un `Makefile` para agilizar la gestión de la infraestructura local:
-
-### 1. Verificar el estado de los servicios locales
-
-make status
-
-# Clúster de Autenticación de Alta Disponibilidad: LDAP, Kerberos y HAProxy
-
-Este repositorio contiene el diseño, la implementación y las pruebas de resiliencia de un **Sistema de Autenticación y Directorio de Alta Disponibilidad (HA)** distribuido, configurado en un entorno Linux en la Facultad de Ingeniería de Sistemas (**FIS - EPN**).
-
-El sistema elimina los Puntos Únicos de Fallo (SPOF) distribuyendo de manera redundante el servicio de directorio (OpenLDAP) y el servidor de autenticación (Kerberos KDC), gestionados por un balanceador de carga de Capa 4 (HAProxy).
+Este repositorio contiene el diseño, la implementación y las pruebas de resiliencia de **MiniIdM**, un sistema de gestión de identidades e infraestructura de autenticación distribuida en **Alta Disponibilidad (HA)**. Diseñado específicamente para los requerimientos de la Facultad de Ingeniería de Sistemas (**FIS - EPN**), el proyecto elimina los puntos únicos de fallo (SPOF) duplicando tanto el servicio de directorio (OpenLDAP) como el de autenticación (Kerberos KDC), bajo un balanceador de carga de Capa 4 (HAProxy).
 
 ---
 
 ## 📐 1. Arquitectura del Sistema
 
-La topología de red real desplegada se divide de la siguiente manera:
+La topología de red real implementada (adaptada para entornos virtuales y WSL2) distribuye las cargas en tres instancias lógicas dentro del segmento de red local:
 
-*   **Front-End / Balanceador de Carga (`ldap.fis.epn.edu.ec` - `192.168.50.30`):** Aloja el servicio **HAProxy** escuchando en el puerto **`3890`**. Distribuye el tráfico entrante utilizando algoritmos de balanceo hacia los dos backends activos.
-*   **Nodo Primario (`ldap1.fis.epn.ec` - `192.168.50.10`):** Aloja el servidor OpenLDAP (`slapd` en el puerto **`3389`**) y el KDC Maestro de Kerberos (`FIS.EPN.EC`).
-*   **Nodo Secundario (`ldap2.fis.epn.ec` - `192.168.50.20`):** Aloja el servidor secundario de OpenLDAP (puerto `3389`) y el KDC Esclavo de Kerberos, sincronizados para la conmutación por error (*Failover*).
+```text
+                     [ CLIENTE / ADMINISTRADOR ]
+                                  │
+                       Petición LDAP (Puerto 3890)
+                                  ▼
+                ┌───────────────────────────────────┐
+                │     HAProxy (Balanceador de Carga) │ (192.168.50.30)
+                └─────────────────┬─────────────────┘
+                                  │ (Balanceo Round-Robin / Activo-Pasivo)
+                 ┌────────────────┴────────────────┐
+                 ▼                                 ▼
+   ┌───────────────────────────┐     ┌───────────────────────────┐
+   │    Nodo 1: Principal      │     │     Nodo 2: Secundario    │
+   ├───────────────────────────┤     ├───────────────────────────┤
+   │ IP: 192.168.50.10         │     │ IP: 192.168.50.20         │
+   │                           │     │                           │
+   │ ──► OpenLDAP (Port 3389)  │     │ ──► OpenLDAP (Port 3389)  │
+   │ ──► Kerberos KDC Maestro  │     │ ──► Kerberos KDC Esclavo  │
+   └───────────────────────────┘     └───────────────────────────┘
+
+```
+
+* **Front-End / Balanceador de Carga (`ldap.fis.epn.edu.ec` - `192.168.50.30`):** Corre el servicio **HAProxy** escuchando en el puerto alternativo **`3890`** para redirigir el tráfico hacia los backends disponibles.
+* **Nodo Primario (`ldap1.fis.epn.ec` - `192.168.50.10`):** Aloja el servidor OpenLDAP de producción (`slapd` en el puerto **`3389`**) y el KDC Maestro de Kerberos (`FIS.EPN.EC`).
+* **Nodo Secundario (`ldap2.fis.epn.ec` - `192.168.50.20`):** Aloja la réplica de OpenLDAP (puerto **`3389`**) y el KDC Secundario/Esclavo de Kerberos para conmutación por error instantánea (*failover*).
 
 ---
 
 ## 🛠️ 2. Guía de Uso y Administración Rápida
 
-Para facilitar la evaluación y el control del clúster, se ha diseñado un `Makefile` en la raíz del proyecto con tareas de automatización clave:
+Para facilitar la evaluación, control y auditoría de la plataforma en tiempo real, la raíz del repositorio incluye un `Makefile` con comandos automatizados:
 
-### Verificar el estado de los tres demonios
-Para inspeccionar rápidamente si LDAP, Kerberos y HAProxy están levantados y sanos:
+### A) Inspección del Estado de los Servicios
+
+Muestra la salud de los tres demonios del nodo local sin interrumpir la terminal:
+
 ```bash
 make status
 
 ```
 
-### Reiniciar todos los servicios locales
+### B) Reinicio General de la Infraestructura
+
+Aplica de forma ordenada un reinicio a todos los servicios de identidad en caso de cambios de configuración:
 
 ```bash
 make restart-services
 
 ```
 
-### Probar consulta LDAP al puerto local (3389)
+### C) Verificación de Conectividad Directa (Puerto Local 3389)
+
+Realiza un `ldapsearch` rápido apuntando de forma directa a la instancia de OpenLDAP en ejecución local:
 
 ```bash
 make test-active
@@ -56,25 +71,27 @@ make test-active
 
 ## 🧪 3. Cómo Probar el Balanceo de Carga y Failover
 
-### Paso 1: Prueba de Conectividad mediante el Balanceador (Puerto 3890)
+Sigue este protocolo de tres pasos para demostrar el comportamiento distribuido ante fallos durante la defensa del proyecto:
 
-Ejecuta el comando para verificar que la petición pasa a través de HAProxy y obtiene respuesta del árbol LDAP:
+### Paso 1: Comprobar Resolución de Nombres (Balanceador Puerto 3890)
+
+Verifica que el cliente pueda realizar consultas utilizando la URL oficial que apunta a HAProxy:
 
 ```bash
 make test-dns
 
 ```
 
-### Paso 2: Iniciar Monitoreo Continuo
+### Paso 2: Iniciar la Ráfaga de Consultas Continua
 
-Inicia la ráfaga de consultas en tu máquina cliente:
+Inicia un envío continuo de consultas cada segundo en tu terminal para registrar la estabilidad del clúster:
 
 ```bash
 make test-failover
 
 ```
 
-*Verás un flujo continuo de respuestas exitosas en la consola:*
+*Se observará una salida regular y limpia:*
 
 ```text
  Consulta 1: [ OK ]
@@ -83,9 +100,9 @@ make test-failover
 
 ```
 
-### Paso 3: Inyección del Fallo (Simular Caída de `ldap1`)
+### Paso 3: Simular Crash del Servidor Primario
 
-Mientras el comando del Paso 2 está corriendo, conéctate al **Nodo Primario (`192.168.50.10`)** y tumba el servicio de LDAP:
+Mientras la ráfaga anterior se ejecuta, simula una caída catastrófica deteniendo el servicio en el **Nodo Primario (`ldap1` / `192.168.50.10`)**:
 
 ```bash
 sudo systemctl stop slapd
@@ -94,39 +111,43 @@ sudo systemctl stop slapd
 
 ### Paso 4: Comportamiento Esperado
 
-En la pantalla del cliente notarás que la transmisión **no se detiene**. Tras un reintento imperceptible en milisegundos, HAProxy detecta el nodo caído, lo retira del pool de servidores activos y redirige de forma completamente transparente todas las consultas hacia el nodo secundario (`ldap2.fis.epn.ec`).
+En la pantalla del cliente, la secuencia de consultas **no se detendrá**. HAProxy detectará de manera pasiva el estado inactivo (*DOWN*) de `ldap1` y redirigirá de manera transparente todo el tráfico subsecuente hacia `ldap2.fis.epn.ec`. El cliente experimentará una latencia de redirección menor a un segundo en la transición.
 
 ---
 
 ## 📊 4. Experimentos de Inyección de Fallos e Indicadores (KPIs)
 
-| Experimento de Inyección de Fallo | ¿El sistema continuó disponible? | Tiempo de recuperación medido (RTO) | Tasa de éxito de consultas (KPI) | Comportamiento observado |
+Durante el análisis experimental de la infraestructura distribuida, se inyectaron fallos críticos para registrar los tiempos de recuperación (*Recovery Time Objective - RTO*) y el impacto en los servicios:
+
+| Experimento de Inyección de Fallo | ¿Disponibilidad Continua? | Tiempo de Recuperación (RTO) | Tasa de Éxito de Consultas (KPI) | Comportamiento Observado |
 | --- | --- | --- | --- | --- |
-| **Crash del servidor (`kill -9`)** | Sí | `~1.2` segundos | **`90%`** | HAProxy cerró la conexión rota y migró el flujo de tráfico al Nodo 2 de manera inmediata. |
-| **Partición de red (`iptables DROP`)** | Sí | `~5.4` segundos | **`80%`** | El balanceador retuvo la consulta hasta que expiró el *timeout* de TCP antes de marcar el host como inactivo. |
-| **Expiración de TLS (Fecha futura)** | No (Canal Seguro) | N/A | **`0%`** | El cliente rechazó la conexión arrojando error de autenticidad criptográfica del certificado, validando el diseño de seguridad. |
-| **Fallo de KDC de Kerberos (KDC Down)** | Sí | `~18.8` segundos | **`100%`** | El cliente conmutó de forma transparente al KDC Esclavo configurado en `krb5.conf` tras superar el límite de tiempo del primero. |
+| **Crash del servidor (`kill -9`)** | Sí | `~1.2` segundos | **`90%`** | HAProxy cerró la conexión TCP interrumpida abruptamente y reasignó el tráfico de inmediato. |
+| **Partición de red (`iptables DROP`)** | Sí | `~5.4` segundos | **`80%`** | El balanceador retuvo la consulta activa hasta que se alcanzó el *timeout* TCP configurado antes de conmutar al Nodo 2. |
+| **Expiración de TLS (Fecha futura)** | No (Conexión Segura) | N/A | **`0%`** | El cliente rechazó proactivamente la conexión debido a un certificado no confiable (`peer certificate is expired`), validando la directiva de seguridad. |
+| **Fallo del KDC de Kerberos** | Sí | `~18.8` segundos | **`100%`** | El cliente conmutó de manera automática al KDC Secundario listado en su archivo `krb5.conf` tras expirar el timeout del primero. |
 
 ---
 
 ## 📈 5. Telemetría y Monitoreo
 
-La salud de la infraestructura es recolectada de manera constante por **Prometheus** mediante los recolectores del sistema e integrada visualmente en paneles de **Grafana**:
+La plataforma cuenta con un sistema de observabilidad centralizado utilizando **Prometheus** y **Grafana**:
 
-* **Métricas del Sistema (CPU, RAM, Red):** Monitoreadas a través de `prometheus-node-exporter` (puerto `9100`) en ambos nodos.
-* **Tráfico y throughput de LDAP:** Visualización interactiva en tiempo real del tráfico en el puerto `3389` para estimar transacciones por segundo y picos de tráfico ante inyección de fallos.
+* **Métricas del Sistema Operativo:** Tiempos de CPU, consumo de memoria RAM física y virtual, y carga de sockets de red mediante `prometheus-node-exporter` (puerto `9100`).
+* **Tráfico y Rendimiento de LDAP:** Monitorización de conexiones TCP en caliente e hilos activos sobre el puerto de escucha `3389` para estimar la tasa de consultas por segundo (*Throughput*) durante los ataques controlados e inyecciones de fallo.
 
 ---
 
 **Desarrollado por:** Aubertin Ochoa
 
-**Institución:** Escuela Politécnica Nacional (EPN) - FIS
+**Correo Institucional:** aubertin.ochoa@epn.ec
+
+**Institución:** Escuela Politécnica Nacional (EPN)
 
 **Materia:** Computación Distribuida
 
 **Fecha:** Julio, 2026
 
 ```
-2. **Explica el "Cómo probar":** Les da a los evaluadores un paso a paso directo de qué comandos usar (`make test-failover`, `stop slapd`) para ver el failover con sus propios ojos. ¡Esto agiliza la defensa un 200%!
+¡Tu repositorio está listo para lucir de primer nivel!
 
 ```
