@@ -162,6 +162,116 @@ La plataforma cuenta con un sistema de observabilidad centralizado utilizando **
 
 ---
 
+## ⚡ 6. Guía de Instalación Rápida
+
+Para levantar la infraestructura de **MiniIdM**, ejecuta los siguientes bloques de comandos en cada servidor correspondiente de tu clúster.
+
+### A) En el Balanceador (`192.168.50.30`)
+
+Instala y configura HAProxy para escuchar en el puerto `3890` y balancear hacia los puertos `3389` de tus dos nodos:
+
+```bash
+# 1. Instalar HAProxy
+sudo apt update && sudo apt install haproxy -y
+
+# 2. Configurar el balanceo de carga (Asegúrate de agregar esto al final de /etc/haproxy/haproxy.cfg)
+# listen ldap_cluster
+#     bind *:3890
+#     mode tcp
+#     balance roundrobin
+#     server ldap1 192.168.50.10:3389 check
+#     server ldap2 192.168.50.20:3389 check
+
+# 3. Reiniciar el servicio
+sudo systemctl restart haproxy
+
+```
+
+### B) En los Nodos LDAP (`192.168.50.10` y `192.168.50.20`)
+
+Instala OpenLDAP y configura el demonio para escuchar en tu puerto personalizado:
+
+```bash
+# 1. Instalar OpenLDAP
+sudo apt update && sudo apt install slapd ldap-utils -y
+
+# 2. Cambiar puerto de escucha a 3389 (Editar /etc/default/slapd)
+# SLAPD_SERVICES="ldap://127.0.0.1:3389/ ldap://192.168.50.10:3389/ ldapi:///"
+
+# 3. Levantar el servicio
+sudo systemctl restart slapd
+
+```
+
+---
+
+## 👥 7. Diccionario de Usuarios de Prueba (DIT Completo)
+
+> ⚠️ **Nota de Seguridad Académica:** Por simplicidad en la evaluación y calibración de las pruebas de estrés de este proyecto de Computación Distribuida, **todas las cuentas listadas a continuación comparten la misma contraseña:**
+> 🔑 **Contraseña Global:** `password`
+
+A continuación, se detalla el DN (*Distinguished Name*) exacto de cada usuario según la jerarquía establecida en tu árbol de directorios para realizar pruebas de autenticación rápidas mediante `ldapsearch` o `kinit`:
+
+### 🎓 Rama Estudiantes (`ou=estudiantes,dc=fis,dc=epn,dc=ec`)
+
+* **Aubertin Ochoa (Pregrado)**
+* **DN:** `uid=aochoa,ou=pregrado,ou=estudiantes,dc=fis,dc=epn,dc=ec`
+* **Principal Kerberos:** `aochoa@FIS.EPN.EC`
+
+
+* **Juan Pérez (Posgrado)**
+* **DN:** `uid=jperez,ou=posgrado,ou=estudiantes,dc=fis,dc=epn,dc=ec`
+* **Principal Kerberos:** `jperez@FIS.EPN.EC`
+
+
+
+---
+
+### 👨‍🏫 Rama Profesores (`ou=profesores,dc=fis,dc=epn,dc=ec`)
+
+* **Enrique Mafla**
+* **DN:** `uid=emafla,ou=profesores,dc=fis,dc=epn,dc=ec`
+* **Principal Kerberos:** `emafla@FIS.EPN.EC`
+
+
+
+---
+
+### 💼 Rama Administrativos (`ou=administrativos,dc=fis,dc=epn,dc=ec`)
+
+* **Rosa Navarrete (Decanato)**
+* **DN:** `uid=rnavarrete,ou=decanato,ou=administrativos,dc=fis,dc=epn,dc=ec`
+* **Principal Kerberos:** `rnavarrete@FIS.EPN.EC`
+
+
+* **Mario Ortega (Infraestructura de Redes)**
+* **DN:** `uid=mortega,ou=infraestructura_redes,ou=administrativos,dc=fis,dc=epn,dc=ec`
+* **Principal Kerberos:** `mortega@FIS.EPN.EC`
+
+
+* **Luis Suárez (Finanzas)**
+* **DN:** `uid=lsuarez,ou=finanzas,ou=administrativos,dc=fis,dc=epn,dc=ec`
+* **Principal Kerberos:** `lsuarez@FIS.EPN.EC`
+
+
+* **David Montuano (Talento Humano)**
+* **DN:** `uid=dmontuano,ou=talento_humano,ou=administrativos,dc=fis,dc=epn,dc=ec`
+* **Principal Kerberos:** `dmontuano@FIS.EPN.EC`
+
+
+
+---
+
+### 🧪 Comando Rápido para verificar la autenticación de cualquier usuario:
+
+Para probar la autenticación simple contra el balanceador de cualquiera de estos usuarios, puedes ejecutar este comando directamente (reemplazando por el DN que quieras testear):
+
+```bash
+ldapsearch -x -H ldap://ldap.fis.epn.edu.ec:3890 -D "uid=aochoa,ou=pregrado,ou=estudiantes,dc=fis,dc=epn,dc=ec" -w "password" -b "dc=fis,dc=epn,dc=ec"
+
+```
+
+
 **Desarrollado por:** Aubertin Ochoa
 
 **Correo Institucional:** aubertin.ochoa@epn.ec
