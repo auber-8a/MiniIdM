@@ -1,4 +1,5 @@
 # MiniIdM
+# Infraestructura de Identidad Segura para la FIS
 
 ## 🚀 Guía de Uso y Administración rápida
 
