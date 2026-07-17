@@ -6,14 +6,9 @@
 El repositorio incluye un `Makefile` para agilizar la gestión de la infraestructura local:
 
 ### 1. Verificar el estado de los servicios locales
-```bash
+
 make status
 
-Aquí tienes la versión definitiva del `README.md`. Está completamente adaptada con **tus IPs reales (`.10`, `.20`, `.30`)**, los **puertos reales de tu configuración (`3389` para OpenLDAP y `3890` para HAProxy)**, la **base de datos que descubrimos (`dc=fis,dc=epn,dc=ec`)** y los datos experimentales que medimos en vivo.
-
-Crea o reemplaza el archivo `README.md` en la raíz de tu proyecto (`~/ProyectoIIB/README.md`) con este contenido:
-
-```markdown
 # Clúster de Autenticación de Alta Disponibilidad: LDAP, Kerberos y HAProxy
 
 Este repositorio contiene el diseño, la implementación y las pruebas de resiliencia de un **Sistema de Autenticación y Directorio de Alta Disponibilidad (HA)** distribuido, configurado en un entorno Linux en la Facultad de Ingeniería de Sistemas (**FIS - EPN**).
