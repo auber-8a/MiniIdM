@@ -282,7 +282,6 @@ ldapsearch -x -H ldap://ldap.fis.epn.edu.ec:3890 -D "uid=aochoa,ou=pregrado,ou=e
 
 **Fecha:** Julio, 2026
 
-```
-¡Tu repositorio está listo para lucir de primer nivel!
+
 
 ```
