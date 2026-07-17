@@ -1,0 +1,10 @@
+dn: cn=config
+changetype: modify
+add: olcTLSCACertificateFile
+olcTLSCACertificateFile: /etc/ssl/fis-pki/ca.crt
+-
+add: olcTLSCertificateFile
+olcTLSCertificateFile: /etc/ssl/fis-pki/ldap.crt
+-
+add: olcTLSCertificateKeyFile
+olcTLSCertificateKeyFile: /etc/ssl/fis-pki/ldap.key

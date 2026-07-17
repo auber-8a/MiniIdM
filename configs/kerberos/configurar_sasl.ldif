@@ -1,0 +1,4 @@
+dn: cn=config
+changetype: modify
+replace: olcSaslRegexp
+olcSaslRegexp: uid=([^,]*),cn=fis.epn.ec,cn=auth uid=$1,ou=pregrado,ou=estudiantes,dc=fis,dc=epn,dc=ec

@@ -1,0 +1,16 @@
+dn: olcDatabase={1}mdb,cn=config
+changetype: modify
+add: olcDbIndex
+olcDbIndex: entryUUID,entryCSN eq
+-
+add: olcSyncrepl
+olcSyncrepl: rid=001
+  provider=ldaps://192.168.50.10:636
+  type=refreshAndPersist
+  retry="60 10 300 +"
+  searchbase="dc=fis,dc=epn,dc=ec"
+  bindmethod=simple
+  binddn="cn=admin,dc=fis,dc=epn,dc=ec"
+  credentials=password
+  tls_cacert=/etc/ssl/fis-pki/ca.crt
+  tls_reqcert=allow

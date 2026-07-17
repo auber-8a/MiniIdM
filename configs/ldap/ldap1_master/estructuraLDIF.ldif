@@ -1,0 +1,153 @@
+# --- UNIDADES ORGANIZACIONALES PRINCIPALES ---
+dn: ou=estudiantes,dc=fis,dc=epn,dc=ec
+objectClass: organizationalUnit
+ou: estudiantes
+
+dn: ou=pregrado,ou=estudiantes,dc=fis,dc=epn,dc=ec
+objectClass: organizationalUnit
+ou: pregrado
+
+dn: ou=posgrado,ou=estudiantes,dc=fis,dc=epn,dc=ec
+objectClass: organizationalUnit
+ou: posgrado
+
+dn: ou=profesores,dc=fis,dc=epn,dc=ec
+objectClass: organizationalUnit
+ou: profesores
+
+dn: ou=administrativos,dc=fis,dc=epn,dc=ec
+objectClass: organizationalUnit
+ou: administrativos
+
+dn: ou=decanato,ou=administrativos,dc=fis,dc=epn,dc=ec
+objectClass: organizationalUnit
+ou: decanato
+
+dn: ou=infraestructura_redes,ou=administrativos,dc=fis,dc=epn,dc=ec
+objectClass: organizationalUnit
+ou: infraestructura_redes
+
+dn: ou=finanzas,ou=administrativos,dc=fis,dc=epn,dc=ec
+objectClass: organizationalUnit
+ou: finanzas
+
+dn: ou=talento_humano,ou=administrativos,dc=fis,dc=epn,dc=ec
+objectClass: organizationalUnit
+ou: talento_humano
+
+# --- GRUPOS DE SEGURIDAD ---
+dn: cn=estudiantes_grp,dc=fis,dc=epn,dc=ec
+objectClass: posixGroup
+cn: estudiantes_grp
+gidNumber: 5001
+
+dn: cn=profesores_grp,dc=fis,dc=epn,dc=ec
+objectClass: posixGroup
+cn: profesores_grp
+gidNumber: 5002
+
+dn: cn=admin_grp,dc=fis,dc=epn,dc=ec
+objectClass: posixGroup
+cn: admin_grp
+gidNumber: 5003
+
+# --- USUARIOS: ESTUDIANTES ---
+dn: uid=aochoa,ou=pregrado,ou=estudiantes,dc=fis,dc=epn,dc=ec
+objectClass: inetOrgPerson
+objectClass: posixAccount
+objectClass: shadowAccount
+cn: Aubertin Ochoa
+sn: Ochoa
+uid: aochoa
+uidNumber: 10001
+gidNumber: 5001
+homeDirectory: /home/aochoa
+loginShell: /bin/bash
+mail: aubertin.ochoa@epn.edu.ec
+userPassword: password
+
+dn: uid=jperez,ou=posgrado,ou=estudiantes,dc=fis,dc=epn,dc=ec
+objectClass: inetOrgPerson
+objectClass: posixAccount
+objectClass: shadowAccount
+cn: Juan Perez
+sn: Perez
+uid: jperez
+uidNumber: 10002
+gidNumber: 5001
+homeDirectory: /home/jperez
+loginShell: /bin/bash
+mail: juan.perez@epn.edu.ec
+userPassword: password
+
+# --- USUARIOS: PROFESORES ---
+dn: uid=emafla,ou=profesores,dc=fis,dc=epn,dc=ec
+objectClass: inetOrgPerson
+objectClass: posixAccount
+objectClass: shadowAccount
+cn: Enrique Mafla
+sn: Mafla
+uid: emafla
+uidNumber: 20001
+gidNumber: 5002
+homeDirectory: /home/emafla
+loginShell: /bin/bash
+mail: enrique.mafla@epn.edu.ec
+userPassword: password
+
+# --- USUARIOS: ADMINISTRATIVOS ---
+dn: uid=rnavarrete,ou=decanato,ou=administrativos,dc=fis,dc=epn,dc=ec
+objectClass: inetOrgPerson
+objectClass: posixAccount
+objectClass: shadowAccount
+cn: Rosa Navarrete
+sn: Navarrete
+uid: rnavarrete
+uidNumber: 30001
+gidNumber: 5003
+homeDirectory: /home/rnavarrete
+loginShell: /bin/bash
+mail: rosa.navarrete@epn.edu.ec
+userPassword: password
+
+dn: uid=mortega,ou=infraestructura_redes,ou=administrativos,dc=fis,dc=epn,dc=ec
+objectClass: inetOrgPerson
+objectClass: posixAccount
+objectClass: shadowAccount
+cn: Mario Ortega
+sn: Ortega
+uid: mortega
+uidNumber: 30002
+gidNumber: 5003
+homeDirectory: /home/mortega
+loginShell: /bin/bash
+mail: mario.ortega@epn.edu.ec
+userPassword: password
+
+dn: uid=lsuarez,ou=finanzas,ou=administrativos,dc=fis,dc=epn,dc=ec
+objectClass: inetOrgPerson
+objectClass: posixAccount
+objectClass: shadowAccount
+cn: Luis Suarez
+sn: Suarez
+uid: lsuarez
+uidNumber: 30003
+gidNumber: 5003
+homeDirectory: /home/lsuarez
+loginShell: /bin/bash
+mail: luis.suarez@epn.edu.ec
+userPassword: password
+
+dn: uid=dmontuano,ou=talento_humano,ou=administrativos,dc=fis,dc=epn,dc=ec
+objectClass: inetOrgPerson
+objectClass: posixAccount
+objectClass: shadowAccount
+cn: David Montuano
+sn: Montuano
+uid: dmontuano
+uidNumber: 30004
+gidNumber: 5003
+homeDirectory: /home/dmontuano
+loginShell: /bin/bash
+mail: david.montuano@epn.edu.ec
+userPassword: password
