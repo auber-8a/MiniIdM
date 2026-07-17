@@ -271,7 +271,6 @@ ldapsearch -x -H ldap://ldap.fis.epn.edu.ec:3890 -D "uid=aochoa,ou=pregrado,ou=e
 
 ```
 
-
 **Desarrollado por:** Aubertin Ochoa
 
 **Correo Institucional:** aubertin.ochoa@epn.ec
@@ -281,7 +280,5 @@ ldapsearch -x -H ldap://ldap.fis.epn.edu.ec:3890 -D "uid=aochoa,ou=pregrado,ou=e
 **Materia:** Computación Distribuida
 
 **Fecha:** Julio, 2026
-
-
 
 ```
